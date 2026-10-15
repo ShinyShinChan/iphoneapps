@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<meta name="theme-color" content="#0f1214" />
+<title>StoneCut Pro — Guillotine Slab Optimizer</title>
+<style>
+:root{
+  --bg:#0f1214; --panel:#171b1e; --panel2:#1d2226; --line:#30373c;
+  --text:#eef2f4; --muted:#9ca8af; --accent:#d8b46a; --accent2:#7ec8d8;
+  --good:#7bd89d; --warn:#f0c66f; --bad:#ff7e7e; --stone:#b9b7ae;
+  --shadow:0 12px 28px rgba(0,0,0,.26);
+}
+*{box-sizing:border-box}
+body{margin:0;overscroll-behavior:none;background:linear-gradient(180deg,#0c0f11,#12171a 44%,#0e1214);color:var(--text);
+font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;min-height:100vh}
+header{position:sticky;top:0;z-index:20;background:rgba(15,18,20,.94);backdrop-filter:blur(10px);
+border-bottom:1px solid var(--line);padding:14px 18px}
+.brand{max-width:1400px;margin:auto;display:flex;align-items:center;gap:12px;justify-content:space-between}
+.brand h1{font-size:20px;margin:0;letter-spacing:.3px}
+.brand small{display:block;color:var(--muted);font-size:12px;margin-top:2px}
+.kerf-pill{border:1px solid #5d4d2e;background:#2a2419;color:#f1d59d;border-radius:999px;padding:8px 11px;font-weight:700;font-size:12px}
+main{max-width:1400px;margin:0 auto;padding:18px;display:grid;grid-template-columns:440px 1fr;gap:18px}
+@media(max-width:980px){main{grid-template-columns:1fr;padding:12px;gap:12px}.brand small{display:none}.card-body{padding:12px}.card-head{padding:12px 13px}}
+.card{background:linear-gradient(180deg,#191e21,#14181b);border:1px solid #31393e;border-radius:18px;box-shadow:0 14px 34px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.025);overflow:hidden}
+.card h2{font-size:15px;margin:0}.card-head{padding:14px 15px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:10px}
+.card-body{padding:14px 15px}.stack{display:grid;gap:12px}
+.help{font-size:12px;line-height:1.45;color:var(--muted)}
+.row-head,.piece-row,.slab-row{display:grid;gap:8px;align-items:end}
+.piece-row{grid-template-columns:58px 1fr 1fr 66px 38px}
+.slab-row{grid-template-columns:1fr 1fr 66px 38px}
+.row-head{grid-template-columns:58px 1fr 1fr 66px 38px;color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.7px;padding:0 2px}
+.slab-head{grid-template-columns:1fr 1fr 66px 38px}
+@media(max-width:480px){.piece-row{grid-template-columns:54px 1fr 1fr 56px 34px}.slab-row{grid-template-columns:1fr 1fr 56px 34px}}
+label{font-size:11px;color:var(--muted);display:block;margin-bottom:5px}
+input,button,select{font:inherit}
+input[type=text],input[type=number]{width:100%;background:#0f1315;color:var(--text);border:1px solid #343c41;border-radius:10px;padding:11px 10px;outline:none}
+input:focus{border-color:#866f42;box-shadow:0 0 0 3px rgba(216,180,106,.12)}
+.measure{cursor:pointer;font-variant-numeric:tabular-nums}
+.qty{text-align:center}
+button{border:1px solid #3a4248;border-radius:10px;background:#22282c;color:var(--text);padding:10px 12px;cursor:pointer;font-weight:700}
+button:hover{filter:brightness(1.08)}
+button.primary{background:linear-gradient(180deg,#e0bd73,#b9893b);border-color:#e0bd73;color:#16120b;box-shadow:0 8px 20px rgba(216,180,106,.16)}
+button.ghost{background:#151a1d}
+button.danger{padding:8px;background:#221719;border-color:#4a2a2e;color:#ffb1b1}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+.actions button{flex:1 1 auto}
+.divider{height:1px;background:var(--line);margin:4px 0}
+.result-grid{display:grid;gap:14px}
+.summary{padding:12px 14px;border-radius:12px;border:1px solid #2f393e;background:#121719;display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.metric{min-width:110px}.metric b{display:block;font-size:18px}.metric span{font-size:11px;color:var(--muted)}
+.status{margin-left:auto;font-weight:800;font-size:12px;padding:7px 9px;border-radius:999px}
+.status.good{background:#153222;color:#9ce5b4;border:1px solid #28583a}.status.bad{background:#351b1b;color:#ffb3b3;border:1px solid #6a3434}
+.layout-card{border:1px solid var(--line);border-radius:14px;background:#101416;overflow:hidden}
+.layout-title{padding:11px 12px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:8px;align-items:center;font-size:12px}
+.layout-title strong{font-size:13px}
+.svg-wrap{padding:12px;background:repeating-linear-gradient(45deg,#13181a,#13181a 10px,#111517 10px,#111517 20px);overflow:auto}
+svg{display:block;width:100%;height:auto;max-height:650px}
+.sequence{counter-reset:item;display:grid;gap:8px}
+.step{display:grid;grid-template-columns:34px 1fr;gap:9px;align-items:start;padding:9px 10px;border:1px solid #2d353a;border-radius:10px;background:#13181b}
+.step-num{width:26px;height:26px;border-radius:7px;background:#252d31;display:grid;place-items:center;font-weight:800;font-size:12px;color:#dce5e9}
+.step b{font-size:12px}.step p{margin:3px 0 0;color:#b4c0c6;font-size:11px;line-height:1.4}
+.tag{display:inline-block;font-size:9px;text-transform:uppercase;letter-spacing:.7px;padding:3px 5px;border-radius:5px;margin-right:6px;vertical-align:1px}
+.tag.cut{background:#3a2e19;color:#f1cc7c}.tag.stage{background:#1c2c3a;color:#96d4ff}.tag.load{background:#27311f;color:#b6e996}.tag.done{background:#2b2035;color:#dbb4ff}.tag.warn{background:#3b2222;color:#ffb0b0}
+.warning{border:1px solid #61432c;background:#291f16;color:#efd0a2;padding:11px 12px;border-radius:10px;font-size:12px;line-height:1.45}
+.error{border-color:#6a3333;background:#2a1717;color:#ffbcbc}
+.empty{padding:54px 20px;text-align:center;color:var(--muted)}
+.legend{display:flex;gap:10px;flex-wrap:wrap;font-size:10px;color:var(--muted);margin-top:7px}.legend i{width:11px;height:11px;border-radius:3px;display:inline-block;margin-right:4px;vertical-align:-1px}
+.kbd-overlay{position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.65);display:none;align-items:end;justify-content:center}
+.kbd-overlay.open{display:flex}
+.keypad{width:min(560px,100%);background:#161b1e;border:1px solid #3c4449;border-radius:18px 18px 0 0;padding:14px;padding-bottom:calc(14px + env(safe-area-inset-bottom));box-shadow:0 -18px 50px rgba(0,0,0,.42)}
+.kdisplay{display:flex;justify-content:space-between;align-items:end;background:linear-gradient(180deg,#0d1113,#111719);border:1px solid #374147;border-radius:14px;padding:12px 14px;margin-bottom:8px;box-shadow:inset 0 1px 0 rgba(255,255,255,.025)}
+.kdisplay b{font-size:30px;letter-spacing:.2px}.kdisplay small{color:var(--muted);font-size:11px;padding-bottom:4px}
+.keys{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.keys button{min-height:52px;font-size:17px;border-radius:12px;background:linear-gradient(180deg,#252c30,#1d2327)}
+.keys .wide{grid-column:span 2}.keys .accent{background:linear-gradient(180deg,#3a301f,#2a2318);border-color:#6f5a36;color:#f5d68f}
+.quick-fracs{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:10px 0}.quick-fracs button{min-height:46px;background:linear-gradient(180deg,#28363d,#202b31);color:#c6e9f1;border-color:#405d68;font-size:13px}
+.kfoot{display:grid;grid-template-columns:.8fr 1.3fr;gap:8px;margin-top:10px}.kfoot button{min-height:48px}.kfoot .use{background:linear-gradient(180deg,#e2c27f,#c69b4d);color:#17130c;border-color:#efcf8c;box-shadow:0 6px 18px rgba(216,180,106,.18)}
+details{border:1px solid #2d353a;border-radius:10px;background:#121719;padding:9px 10px}
+details summary{cursor:pointer;font-weight:700;font-size:12px}
+.note{font-size:11px;color:#95a1a8;line-height:1.45;margin-top:8px}
+.checkbox{display:flex;align-items:center;gap:7px;font-size:12px;color:#c5ced3}
+.checkbox input{accent-color:#d8b46a}
+</style>
+
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="format-detection" content="telephone=no">
+
+<style>
+html{background:var(--bg,#0f1214)}
+@supports (padding: max(0px)){body{padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)}}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <div><h1>StoneCut Pro</h1><small>Guillotine slab optimizer • full-pass cuts only • shop-floor cut sequence</small></div>
+    <div class="kerf-pill">Saw kerf: 1/4″</div>
+  </div>
+</header>
+
+<main>
+<section class="stack">
+  <div class="card">
+    <div class="card-head"><h2>Pieces</h2><button class="ghost" onclick="addPiece()">+ Add piece</button></div>
+    <div class="card-body stack">
+      <div class="row-head"><span>Label</span><span>Length</span><span>Width</span><span>Qty</span><span></span></div>
+      <div id="pieces"></div>
+      <div class="help">Rotation is allowed by default. Quantities become A1, A2, B1, etc. Every planned cut is a complete pass across the current stone section — never a drop cut.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><h2>Available slabs</h2><button class="ghost" onclick="addSlab()">+ Add slab</button></div>
+    <div class="card-body stack">
+      <div class="row-head slab-head"><span>Length</span><span>Width</span><span>Qty</span><span></span></div>
+      <div id="slabs"></div>
+      <label class="checkbox"><input id="rotate" type="checkbox" checked> Allow pieces to rotate 90° for best yield</label>
+      <div class="help">Enter actual measured slab dimensions when possible. Kerf is treated strictly: two kept sections separated by one saw pass consume 1/4″.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><h2>Optimize</h2></div>
+    <div class="card-body stack">
+      <button class="primary" onclick="optimize()">Generate Best Cut Plan</button>
+      <div class="actions">
+        <button class="ghost" onclick="loadDemo1()">Load A/B/C example</button>
+        <button class="ghost" onclick="loadDemo2()">Load staged-remnant example</button>
+      </div>
+      <details>
+        <summary>How the optimizer thinks</summary>
+        <div class="note">It searches many guillotine layouts, including rotated pieces and both possible first-cut directions. A placement is legal only when each cut can run completely through the current slab/remnant. The cut sequence then walks that cut tree and tells you what stays on the table, what gets set aside, and when a labeled remnant must be reloaded.</div>
+      </details>
+    </div>
+  </div>
+</section>
+
+<section class="card">
+  <div class="card-head">
+    <h2>Cut plan</h2>
+    <div class="actions"><button id="printBtn" class="ghost" onclick="printPlan()" disabled>Print / Save PDF</button></div>
+  </div>
+  <div class="card-body">
+    <div id="output" class="empty">Enter your pieces and slab sizes, then generate a plan.</div>
+  </div>
+</section>
+</main>
+
+<div id="kbd" class="kbd-overlay" onclick="if(event.target===this)closeKeypad()">
+  <div class="keypad">
+    <div class="kdisplay"><b id="kMixed">0″</b><small id="kDecimal">0.000 in</small></div>
+    <div class="quick-fracs">
+      <button onclick="addFrac(1)">+ 1/16</button><button onclick="addFrac(2)">+ 1/8</button><button onclick="addFrac(4)">+ 1/4</button><button onclick="addFrac(8)">+ 1/2</button>
+    </div>
+    <div class="keys">
+      <button onclick="digit(7)">7</button><button onclick="digit(8)">8</button><button onclick="digit(9)">9</button><button class="accent" onclick="backspace()">⌫</button>
+      <button onclick="digit(4)">4</button><button onclick="digit(5)">5</button><button onclick="digit(6)">6</button><button class="accent" onclick="clearMeasure()">Clear</button>
+      <button onclick="digit(1)">1</button><button onclick="digit(2)">2</button><button onclick="digit(3)">3</button><button onclick="setWholeZero()">0″</button>
+      <button class="wide" onclick="digit(0)">0</button><button class="wide accent" onclick="subtractLastFrac()">− Last fraction</button>
+    </div>
+    <div class="kfoot"><button onclick="closeKeypad()">Cancel</button><button class="use" onclick="useMeasure()">Use</button></div>
+  </div>
+</div>
+
+<script>
+function printPlan(){
+  try{
+    if(window.AndroidApp && typeof window.AndroidApp.printPlan === 'function'){
+      window.AndroidApp.printPlan();
+      return;
+    }
+  }catch(e){}
+  window.print();
+}
+
+const KERF = 0.25;
+const RELOAD_ALLOWANCE = 1.0; // minimum extra stock on any blank that leaves the table
+const EPS = 1e-7;
+let pieceCount=0, slabCount=0;
+let activeInput=null, wholeText='0', frac16=0, lastFrac=0;
+
+
+function gcd(a,b){while(b){[a,b]=[b,a%b]}return a}
+function toMixed(v, quote=true){
+  if(!isFinite(v)) return '';
+  v=Math.max(0,v);
+  let total=Math.round(v*16), whole=Math.floor(total/16), n=total%16;
+  let s=''+whole;
+  if(n){let g=gcd(n,16); s += ' '+(n/g)+'/'+(16/g)}
+  return s+(quote?'″':'');
+}
+function parseMeasure(s){
+  if(typeof s==='number') return s;
+  s=(s||'').replace(/["″]/g,'').trim();
+  if(!s) return 0;
+  if(/^\d+(\.\d+)?$/.test(s)) return +s;
+  let parts=s.split(/\s+/), val=0;
+  for(const p of parts){
+    if(p.includes('/')){let [a,b]=p.split('/').map(Number); if(b) val+=a/b}
+    else if(!isNaN(+p)) val+=+p;
+  }
+  return val;
+}
+function makeMeasureInput(value=''){
+  return `<input class="measure" type="text" readonly placeholder="0″" value="${value}" onclick="openKeypad(this)">`;
+}
+function addPiece(label='',l='',w='',q=1){
+  pieceCount++;
+  const id='p'+pieceCount;
+  const auto=label||String.fromCharCode(64+Math.min(pieceCount,26));
+  const wrap=document.createElement('div');
+  wrap.className='piece-row'; wrap.id=id;
+  wrap.innerHTML=`<input type="text" class="plabel" value="${auto}" maxlength="4" aria-label="Piece label">
+  ${makeMeasureInput(l)}${makeMeasureInput(w)}
+  <input class="qty" type="number" min="1" max="99" value="${q}" aria-label="Quantity">
+  <button class="danger" onclick="removeRow('${id}')">×</button>`;
+  document.getElementById('pieces').appendChild(wrap);
+}
+function addSlab(l='',w='',q=1){
+  slabCount++;
+  const id='s'+slabCount, wrap=document.createElement('div');
+  wrap.className='slab-row'; wrap.id=id;
+  wrap.innerHTML=`${makeMeasureInput(l)}${makeMeasureInput(w)}
+  <input class="qty" type="number" min="1" max="99" value="${q}" aria-label="Quantity">
+  <button class="danger" onclick="removeRow('${id}')">×</button>`;
+  document.getElementById('slabs').appendChild(wrap);
+}
+function removeRow(id){document.getElementById(id)?.remove()}
+function openKeypad(inp){
+  activeInput=inp;
+  let v=parseMeasure(inp.value), t=Math.round(v*16);
+  wholeText=String(Math.floor(t/16)); frac16=t%16; lastFrac=0;
+  updateK(); document.getElementById('kbd').classList.add('open');
+}
+function closeKeypad(){document.getElementById('kbd').classList.remove('open');activeInput=null}
+function digit(n){if(wholeText==='0') wholeText=''; wholeText=(wholeText+n).replace(/^0+(?=\d)/,''); updateK()}
+function backspace(){wholeText=wholeText.length>1?wholeText.slice(0,-1):'0';updateK()}
+function clearMeasure(){wholeText='0';frac16=0;lastFrac=0;updateK()}
+function setWholeZero(){wholeText='0';updateK()}
+function addFrac(n){frac16+=n;lastFrac=n; while(frac16>=16){wholeText=String((+wholeText||0)+1);frac16-=16} updateK()}
+function subtractLastFrac(){if(!lastFrac)return;frac16-=lastFrac;while(frac16<0){if((+wholeText||0)>0){wholeText=String((+wholeText)-1);frac16+=16}else{frac16=0;break}}updateK()}
+function updateK(){
+  const v=(+wholeText||0)+frac16/16;
+  document.getElementById('kMixed').textContent=toMixed(v);
+  document.getElementById('kDecimal').textContent=v.toFixed(3)+' in';
+}
+function useMeasure(){
+  if(activeInput) activeInput.value=toMixed((+wholeText||0)+frac16/16);
+  closeKeypad();
+}
+function resetRows(){document.getElementById('pieces').innerHTML='';document.getElementById('slabs').innerHTML='';pieceCount=slabCount=0}
+function loadDemo1(){
+  resetRows();
+  addPiece('A','30 1/2″','24 1/2″',2); addPiece('B','30″','24″',1); addPiece('C','18″','70″',1);
+  addSlab('75″','50″',1);
+}
+function loadDemo2(){
+  resetRows();
+  addPiece('A','55″','20″',2); addPiece('B','48″','20″',1);
+  addSlab('75″','50″',1);
+}
+
+function getData(){
+  const pieces=[]; let seq=0;
+  for(const r of document.querySelectorAll('#pieces .piece-row')){
+    const label=(r.querySelector('.plabel').value||'?').trim().toUpperCase();
+    const ms=r.querySelectorAll('.measure'), l=parseMeasure(ms[0].value), w=parseMeasure(ms[1].value);
+    const q=Math.max(1,parseInt(r.querySelector('.qty').value||1));
+    if(l<=0||w<=0) continue;
+    for(let i=1;i<=q;i++) pieces.push({key:'pc'+(++seq),label,instance:q>1?i:null,name:q>1?label+i:label,l,w,area:l*w});
+  }
+  const slabs=[]; let sn=0;
+  for(const r of document.querySelectorAll('#slabs .slab-row')){
+    const ms=r.querySelectorAll('.measure'), l=parseMeasure(ms[0].value), w=parseMeasure(ms[1].value);
+    const q=Math.max(1,parseInt(r.querySelector('.qty').value||1));
+    if(l<=0||w<=0) continue;
+    for(let i=0;i<q;i++) slabs.push({index:sn++,l,w,name:'Slab '+(sn)});
+  }
+  return {pieces,slabs,rotate:document.getElementById('rotate').checked};
+}
+
+function rng(seed){
+  return function(){seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return ((t^t>>>14)>>>0)/4294967296}
+}
+function shuffled(a,rand){let b=a.slice();for(let i=b.length-1;i>0;i--){let j=Math.floor(rand()*(i+1));[b[i],b[j]]=[b[j],b[i]]}return b}
+
+function possiblePlacement(rect,pw,ph,split){
+  if(pw>rect.w+EPS||ph>rect.h+EPS) return null;
+  const dw=rect.w-pw, dh=rect.h-ph;
+  const children=[], cuts=[];
+  if(split==='V'){
+    if(dw>EPS){
+      const usable=dw>KERF+EPS;
+      cuts.push({axis:'V',x:rect.x+pw,y:rect.y,w:Math.min(KERF,dw),h:rect.h,span:rect.h});
+      if(usable) children.push({x:rect.x+pw+KERF,y:rect.y,w:dw-KERF,h:rect.h,role:'right'});
+    }
+    if(dh>EPS){
+      const usable=dh>KERF+EPS;
+      cuts.push({axis:'H',x:rect.x,y:rect.y+ph,w:pw,h:Math.min(KERF,dh),span:pw});
+      if(usable) children.push({x:rect.x,y:rect.y+ph+KERF,w:pw,h:dh-KERF,role:'bottom'});
+    }
+  }else{
+    if(dh>EPS){
+      const usable=dh>KERF+EPS;
+      cuts.push({axis:'H',x:rect.x,y:rect.y+ph,w:rect.w,h:Math.min(KERF,dh),span:rect.w});
+      if(usable) children.push({x:rect.x,y:rect.y+ph+KERF,w:rect.w,h:dh-KERF,role:'bottom'});
+    }
+    if(dw>EPS){
+      const usable=dw>KERF+EPS;
+      cuts.push({axis:'V',x:rect.x+pw,y:rect.y,w:Math.min(KERF,dw),h:ph,span:ph});
+      if(usable) children.push({x:rect.x+pw+KERF,y:rect.y,w:dw-KERF,h:ph,role:'right'});
+    }
+  }
+  const sliver=children.reduce((s,c)=>s+(Math.min(c.w,c.h)<3?500:0)+(Math.min(c.w,c.h)<1?2000:0),0);
+  const tight=Math.min(Math.max(0,dw),Math.max(0,dh))*25 + Math.max(dw,dh);
+  const exact=(Math.abs(dw)<EPS? -800:0)+(Math.abs(dh)<EPS?-800:0);
+  return {children,cuts,score:tight+sliver+exact, pw,ph,split};
+}
+
+function dimsKey(a,b){
+  const x=Math.round(Math.min(a,b)*16), y=Math.round(Math.max(a,b)*16);
+  return x+'x'+y;
+}
+function sameValue(a,b){return Math.abs(a-b)<EPS}
+function pack(order,slabDefs,rotate){
+  let remSeq=0, placements=[], operations=[], activated=0;
+  const slabs=slabDefs.map((s,i)=>({...s,rootId:'S'+(i+1),active:false,placements:[]}));
+  const free=[];
+  const familyHistory=new Map();
+
+  function recordPlacement(placed){
+    const famKey=placed.piece.label+'|'+dimsKey(placed.piece.l, placed.piece.w);
+    const rec=familyHistory.get(famKey)||{count:0,rot0:0,rot1:0,verticalish:0,horizontalish:0};
+    rec.count++;
+    if(placed.rotated) rec.rot1++; else rec.rot0++;
+    if(placed.rect.h >= placed.rect.w) rec.verticalish++; else rec.horizontalish++;
+    familyHistory.set(famKey,rec);
+  }
+
+  function placementPreference(piece, rect, pw, ph, rot, slabIndex){
+    let bonus=0;
+    const famKey=piece.label+'|'+dimsKey(piece.l,piece.w);
+    const fam=familyHistory.get(famKey);
+    const isVertical = ph >= pw;
+    if(fam){
+      const sameRot=fam.rot0 && !rot || fam.rot1 && rot;
+      const mixedRot=fam.rot0 && fam.rot1;
+      if(sameRot) bonus -= 6000;
+      if(!mixedRot && fam.count>=1 && !sameRot) bonus += 9000;
+      if(fam.verticalish && fam.horizontalish===0 && !isVertical) bonus += 7000;
+      if(fam.horizontalish && fam.verticalish===0 && isVertical) bonus += 7000;
+    }
+
+    // reward lining up repeated pieces into similar width strips / same top edge on the same slab
+    for(const p of placements){
+      if(p.slabIndex!==slabIndex) continue;
+      const sameFamily = p.piece.label===piece.label && dimsKey(p.piece.l,p.piece.w)===dimsKey(piece.l,piece.w);
+      const sameSize = dimsKey(p.piece.l,p.piece.w)===dimsKey(piece.l,piece.w);
+      if(!sameSize) continue;
+      const shareTop=sameValue(p.rect.y, rect.y);
+      const shareBottom=sameValue(p.rect.y+p.rect.h, rect.y+ph);
+      const adjacentRight=sameValue(p.rect.x+p.rect.w+KERF, rect.x);
+      const adjacentLeft=sameValue(rect.x+pw+KERF, p.rect.x);
+      const adjacent = adjacentRight || adjacentLeft;
+      if(shareTop && adjacent) bonus -= sameFamily ? 5000 : 500;
+      if(shareBottom && adjacent) bonus -= sameFamily ? 3500 : 350;
+      if((p.rect.h>=p.rect.w) === isVertical) bonus -= sameFamily ? 1200 : 50;
+    }
+    return bonus;
+  }
+
+  function activateNextFor(piece){
+    for(let i=0;i<slabs.length;i++){
+      if(slabs[i].active) continue;
+      // activate only if piece can fit in either orientation
+      let fit=(piece.l<=slabs[i].l+EPS&&piece.w<=slabs[i].w+EPS) || (rotate&&piece.w<=slabs[i].l+EPS&&piece.l<=slabs[i].w+EPS);
+      if(fit){
+        slabs[i].active=true; activated++;
+        free.push({id:slabs[i].rootId, slabIndex:i, x:0,y:0,w:slabs[i].l,h:slabs[i].w});
+        return true;
+      }
+    }
+    return false;
+  }
+
+  const unplaced=[];
+  for(const piece of order){
+    let best=null;
+    function scan(){
+      best=null;
+      for(let fi=0;fi<free.length;fi++){
+        const r=free[fi], orients=[[piece.l,piece.w,false]];
+        if(rotate && Math.abs(piece.l-piece.w)>EPS) orients.push([piece.w,piece.l,true]);
+        for(const [pw,ph,rot] of orients){
+          for(const split of ['V','H']){
+            const p=possiblePlacement(r,pw,ph,split);
+            if(!p) continue;
+            // prefer earlier slab, compact placement, and grouping repeated parts into consistent strip orientation
+            const slabPenalty=r.slabIndex*20;
+            const originPenalty=(r.x+r.y)*0.02;
+            const pref=placementPreference(piece, r, pw, ph, rot, r.slabIndex);
+            const score=p.score+slabPenalty+originPenalty+pref;
+            if(!best||score<best.score) best={...p,score,fi,r,piece,rot};
+          }
+        }
+      }
+    }
+    scan();
+    if(!best){
+      if(activateNextFor(piece)) scan();
+    }
+    if(!best){unplaced.push(piece);continue}
+
+    const src=free.splice(best.fi,1)[0], slab=slabs[src.slabIndex];
+    const op={sourceId:src.id, slabIndex:src.slabIndex, source:{...src}, piece,
+      pieceRect:{x:src.x,y:src.y,w:best.pw,h:best.ph}, rotated:best.rot, split:best.split,
+      cuts:best.cuts.map(c=>({...c})), children:[]};
+    for(const child of best.children){
+      const id='R'+(++remSeq), rr={id,slabIndex:src.slabIndex,...child};
+      free.push(rr); op.children.push({...rr});
+    }
+    operations.push(op);
+    const placed={piece,slabIndex:src.slabIndex,rect:op.pieceRect,rotated:best.rot,sourceId:src.id};
+    placements.push(placed); slab.placements.push(placed);
+    recordPlacement(placed);
+  }
+
+  const placedArea=placements.reduce((s,p)=>s+p.piece.area,0);
+  const usedArea=slabs.filter(s=>s.active).reduce((s,x)=>s+x.l*x.w,0);
+  const freeArea=free.reduce((s,r)=>s+r.w*r.h,0);
+  const skinny=free.reduce((s,r)=>s+(Math.min(r.w,r.h)<2?1000:0),0);
+  let familyMixPenalty=0;
+  for(const [k,f] of familyHistory){
+    if(f.count>1 && f.rot0 && f.rot1) familyMixPenalty += (f.count-1)*50000;
+    if(f.count>1 && f.verticalish && f.horizontalish) familyMixPenalty += (f.count-1)*35000;
+  }
+  const score=unplaced.reduce((s,p)=>s+p.area*1e8,0)+unplaced.length*1e12+activated*1e9+(usedArea-placedArea)*100+skinny+free.length*10+familyMixPenalty;
+  return {slabs,placements,operations,free,unplaced,score,placedArea,usedArea};
+}
+
+function optimize(){
+  const {pieces,slabs,rotate}=getData(), out=document.getElementById('output');
+  if(!pieces.length||!slabs.length){out.innerHTML='<div class="warning error">Add at least one valid piece and one valid slab.</div>';return}
+  if(pieces.length>80){out.innerHTML='<div class="warning error">This prototype is limited to 80 individual pieces per run so the browser stays responsive.</div>';return}
+
+  const baseOrders=[];
+  baseOrders.push(pieces.slice());
+  baseOrders.push(pieces.slice().sort((a,b)=>b.area-a.area));
+  baseOrders.push(pieces.slice().sort((a,b)=>Math.max(b.l,b.w)-Math.max(a.l,a.w)));
+  baseOrders.push(pieces.slice().sort((a,b)=>(b.l+b.w)-(a.l+a.w)));
+  baseOrders.push(pieces.slice().sort((a,b)=>Math.min(b.l,b.w)-Math.min(a.l,a.w)));
+  const rand=rng(827341);
+  const trials=Math.min(420,80+pieces.length*18);
+  for(let i=0;i<trials;i++) baseOrders.push(shuffled(pieces,rand));
+
+  let best=null;
+  for(const order of baseOrders){
+    const cand=pack(order,slabs,rotate);
+    if(!best||cand.score<best.score) best=cand;
+  }
+  renderResult(best,pieces,slabs);
+  document.getElementById('printBtn').disabled=false;
+}
+
+function colorFor(label){
+  let h=0; for(const c of label) h=(h*31+c.charCodeAt(0))%360;
+  return `hsl(${h} 34% 48%)`;
+}
+function esc(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+function subtreeStats(opMap,id){
+  const op=opMap.get(id); if(!op) return {count:0,area:0};
+  let count=1,area=op.piece.area;
+  for(const ch of op.children){const q=subtreeStats(opMap,ch.id);count+=q.count;area+=q.area}
+  return {count,area};
+}
+function buildSequence(plan,slabIndex){
+  const ops=plan.operations.filter(o=>o.slabIndex===slabIndex);
+  const opMap=new Map(ops.map(o=>[o.sourceId,o]));
+  let stepNo=0, cutNo=0, actions=[];
+  function add(tag,title,text){actions.push({n:++stepNo,tag,title,text})}
+  function visit(id,isReload=false){
+    const op=opMap.get(id); if(!op)return;
+    const src=op.source;
+    if(isReload) add('load','Reload '+id,`Put ${id} back on the table: ${toMixed(src.w)} × ${toMixed(src.h)}. Keep its marked origin corner at the same reference corner shown in the diagram.`);
+    op.cuts.forEach((c,idx)=>{
+      cutNo++;
+      const axis=c.axis==='V'?'vertical':'horizontal';
+      const pos=c.axis==='V'?c.x-src.x:c.y-src.y;
+      add('cut',`Cut ${cutNo} — ${axis} full pass`,
+        `On ${id.startsWith('S')?'the slab':id}, make a full ${axis} pass at ${toMixed(pos)} from its origin edge. Kerf: 1/4″. This cut runs through the entire current section${idx===1?' created by the previous cut':''}.`);
+      c.cutNo=cutNo;
+    });
+    add('done',`Piece ${op.piece.name} complete`,`${toMixed(op.pieceRect.w)} × ${toMixed(op.pieceRect.h)}${op.rotated?' (rotated from entered orientation)':''}. Remove and label it ${op.piece.name}.`);
+
+    const used=op.children.filter(c=>opMap.has(c.id));
+    if(!used.length) return;
+    used.sort((a,b)=>subtreeStats(opMap,b.id).area-subtreeStats(opMap,a.id).area);
+    const primary=used[0], staged=used.slice(1);
+    for(const c of staged) add('stage',`Set aside ${c.id}`,`${toMixed(c.w)} × ${toMixed(c.h)}. Mark the origin corner and remnant ID; this piece is needed later.`);
+    add('load',`Keep ${primary.id} on the table`,`${toMixed(primary.w)} × ${toMixed(primary.h)}. Continue cutting this remnant before reloading staged material.`);
+    visit(primary.id,false);
+    for(const c of staged) visit(c.id,true);
+  }
+  visit('S'+(slabIndex+1),false);
+  return actions;
+}
+
+function shopRound(v){return Math.round(v*16)/16}
+function shopEq(a,b){return Math.abs(a-b)<0.02}
+function stripName(strip){
+  const names=strip.placements.map(p=>p.piece.name);
+  return names.join(' / ')+(names.length===1?' strip':' strip');
+}
+function batchName(batch){
+  const names=[];
+  for(const s of batch.strips) for(const p of s.placements) names.push(p.piece.name);
+  if(names.length<=4) return names.join(' / ')+' strip'+(batch.strips.length===1?'':'s');
+  return names.slice(0,3).join(' / ')+' + '+(names.length-3)+' more strips';
+}
+
+// Builds the shop-preferred workflow while protecting squareness on anything that
+// leaves the table. A staged blank is NEVER cut to a finished width before removal;
+// it receives at least 1" extra cleanup stock and is finished only after reloading.
+function buildStripFirstSequence(plan,slabIndex){
+  const slab=plan.slabs[slabIndex], ps=plan.placements.filter(p=>p.slabIndex===slabIndex);
+  if(!ps.length) return null;
+
+  const map=new Map();
+  for(const p of ps){
+    const key=Math.round(p.rect.x*16)+'|'+Math.round(p.rect.w*16);
+    if(!map.has(key)) map.set(key,{x:p.rect.x,w:p.rect.w,placements:[]});
+    map.get(key).placements.push(p);
+  }
+  const strips=[...map.values()].sort((a,b)=>a.x-b.x);
+  if(!strips.length || !shopEq(strips[0].x,0)) return null;
+
+  // Verify a true strip layout and normalize each strip's stacked pieces.
+  for(let i=0;i<strips.length;i++){
+    const s=strips[i];
+    s.placements.sort((a,b)=>a.rect.y-b.rect.y);
+    if(i>0){
+      const prev=strips[i-1];
+      if(!shopEq(s.x,prev.x+prev.w+KERF)) return null;
+    }
+    if(!shopEq(s.placements[0].rect.y,0)) return null;
+    for(let j=1;j<s.placements.length;j++){
+      const a=s.placements[j-1], b=s.placements[j];
+      if(!shopEq(b.rect.y,a.rect.y+a.rect.h+KERF)) return null;
+    }
+  }
+
+  function signature(s){
+    return s.placements.map(p=>Math.round(p.rect.h*16)).join(',');
+  }
+
+  // Build consecutive matching batches in their natural left-to-right order.
+  const batches=[];
+  for(const s of strips){
+    const sig=signature(s), last=batches[batches.length-1];
+    if(last && last.sig===sig){
+      last.strips.push(s);
+    }else batches.push({sig,strips:[s]});
+  }
+  for(const b of batches){
+    b.pieceCount=b.strips.reduce((n,s)=>n+s.placements.length,0);
+    b.exactWidth=b.strips.reduce((n,s)=>n+s.w,0)+KERF*Math.max(0,b.strips.length-1);
+  }
+
+  // The largest repeated batch is the material we keep on the table and finish first.
+  // Everything else gets a ROUGH blank with >=1" cleanup stock before it is removed.
+  let keep=batches[0];
+  for(const b of batches){
+    const score=b.strips.length*100+b.pieceCount;
+    const best=keep.strips.length*100+keep.pieceCount;
+    if(score>best) keep=b;
+  }
+  const staged=batches.filter(b=>b!==keep);
+
+  // Practical shop layout: staged rough blanks first, then the keep-on-table batch.
+  // This intentionally differs from the pure yield layout when necessary so no staged
+  // piece receives a finished width before it leaves the saw table.
+  let cursor=0;
+  const shopRects=new Map(), roughs=[];
+  for(const b of staged){
+    b.shopX=cursor;
+    b.roughWidth=b.exactWidth+RELOAD_ALLOWANCE;
+    b.finalOffset=RELOAD_ALLOWANCE/2; // visual only: cleanup stock shown on both sides
+    roughs.push({x:b.shopX,y:0,w:b.roughWidth,h:slab.w,label:batchName(b),allowance:RELOAD_ALLOWANCE});
+
+    let sx=b.shopX+b.finalOffset;
+    for(let si=0;si<b.strips.length;si++){
+      const s=b.strips[si];
+      s.shopX=sx;
+      for(const p of s.placements){
+        shopRects.set(p.piece.key,{x:s.shopX,y:p.rect.y,w:s.w,h:p.rect.h});
+      }
+      sx += s.w+(si<b.strips.length-1?KERF:0);
+    }
+    cursor += b.roughWidth+KERF;
+  }
+
+  keep.shopX=cursor;
+  let kx=cursor;
+  for(let si=0;si<keep.strips.length;si++){
+    const s=keep.strips[si];
+    s.shopX=kx;
+    for(const p of s.placements){
+      shopRects.set(p.piece.key,{x:s.shopX,y:p.rect.y,w:s.w,h:p.rect.h});
+    }
+    kx += s.w+(si<keep.strips.length-1?KERF:0);
+  }
+  const practicalWidth = cursor+keep.exactWidth;
+  if(practicalWidth>slab.l+EPS){
+    // The original pure-yield fit does not leave enough material for safe reload cleanup.
+    // Do not emit an unsafe sequence that pretends a staged finished-width strip is okay.
+    return {unsafe:true,requiredWidth:practicalWidth,availableWidth:slab.l,actions:[],marks:[],shopRects:null,roughs:[]};
+  }
+
+  let stepNo=0, cutNo=0;
+  const actions=[], marks=[];
+  function add(tag,title,text){actions.push({n:++stepNo,tag,title,text})}
+  function addMark(axis,x,y,w,h,kind='finish'){
+    cutNo++;
+    marks.push({cutNo,axis,x,y,w,h,kind});
+    return cutNo;
+  }
+
+  add('stage','Initial rip stage — rough blanks first',
+      `Keep the saw vertical. Any material that must leave the table is separated OVERSIZE by at least ${toMixed(RELOAD_ALLOWANCE)}. Do not cut a staged blank to any finished width yet.`);
+
+  // Separate staged blanks oversized. No internal finished-width rip is made yet.
+  for(const b of staged){
+    const boundary=b.shopX+b.roughWidth;
+    const n=addMark('V',boundary,0,KERF,slab.w,'rough');
+    add('cut',`Cut ${n} — rough-separate ${batchName(b)}`,
+        `Make a full vertical pass at ${toMixed(b.roughWidth)} from this blank's outside edge. This leaves ${toMixed(RELOAD_ALLOWANCE)} minimum cleanup stock beyond its finished strip width. This is NOT a finished-size cut.`);
+    add('stage',`Set aside oversized ${batchName(b)}`,
+        `Remove the rough blank at about ${toMixed(b.roughWidth)} wide. Mark it for later. Do not rely on this rough-cut edge as a finished or square reference.`);
+  }
+
+  // Exact-rip the keep batch while it is still continuously supported/aligned on the table.
+  add('load',`Keep ${batchName(keep)} on the table`,
+      'This material will not be removed until its finished-width rips and matching crosscuts are complete, so its vertical cuts can now be made to final size.');
+
+  for(let si=0;si<keep.strips.length;si++){
+    const s=keep.strips[si];
+    const right=s.shopX+s.w;
+    if(right < slab.l-EPS){
+      const n=addMark('V',right,0,KERF,slab.w,'finish');
+      const contents=s.placements.map(p=>p.piece.name).join(' / ');
+      add('cut',`Cut ${n} — finish-rip ${toMixed(s.w)} strip`,
+          `Make a full vertical pass for the ${toMixed(s.w)} finished strip (${contents}). Keep all of these finished-width strips on the table; do not remove them before their length cut.`);
+    }
+  }
+
+  add('stage','Rotate saw 90° — finish the keep-on-table pieces',
+      'The safe final-width rips are complete. Rotate the saw once and crosscut the matching strips while they are still aligned together.');
+
+  const keepTemplate=keep.strips[0].placements;
+  for(let seg=0;seg<keepTemplate.length;seg++){
+    const h=keepTemplate[seg].rect.h;
+    const y=keepTemplate[seg].rect.y+h;
+    const names=keep.strips.map(s=>s.placements[seg]?.piece.name).filter(Boolean);
+    if(y < slab.w-EPS){
+      const x1=keep.strips[0].shopX;
+      const last=keep.strips[keep.strips.length-1];
+      const x2=last.shopX+last.w;
+      const n=addMark('H',x1,y,x2-x1,KERF,'finish');
+      add('cut',`Cut ${n} — crosscut ${toMixed(h)}`,
+          `${seg===0?'From the square slab/reference end':'From the fresh edge left by the previous crosscut'}, make one full horizontal pass at ${toMixed(h)} across ${names.length>1?'all '+names.length+' matching strips':'the strip'}.`);
+    }
+    if(names.length) add('done',`Remove ${names.join(', ')}`,
+      `${names.length>1?'These pieces are':'This piece is'} now at finished size and can come off the table.`);
+  }
+
+  // Each staged blank is reloaded oversized, squared, then finished without another removal in between.
+  for(const b of staged){
+    add('load',`Reload oversized ${batchName(b)}`,
+        `Put the rough blank back on the table. It still has at least ${toMixed(RELOAD_ALLOWANCE)} extra stock, so you do not have to trust the old rough edge or perfectly recreate its previous alignment.`);
+    add('stage','Square / true a fresh reference edge',
+        `Use part of the ${toMixed(RELOAD_ALLOWANCE)} cleanup allowance to make a fresh straight reference edge. From this point forward, keep this blank on the table until its pieces are completely finished.`);
+
+    // Show a representative squaring trim through the middle of the allowance.
+    const refX=b.shopX+b.finalOffset;
+    const n0=addMark('V',refX,0,KERF,slab.w,'square');
+    add('cut',`Cut ${n0} — establish fresh square edge`,
+        'Take a cleanup pass from the oversized blank to establish a true reference. The exact amount removed can vary; the important part is that the finished measurements start from this fresh edge.');
+
+    for(let si=0;si<b.strips.length;si++){
+      const s=b.strips[si], right=s.shopX+s.w;
+      const n=addMark('V',right,0,KERF,slab.w,'finish');
+      const contents=s.placements.map(p=>p.piece.name).join(' / ');
+      add('cut',`Cut ${n} — finish-rip ${toMixed(s.w)} strip`,
+          `From the fresh squared reference, make the full vertical rip for the ${toMixed(s.w)} finished strip (${contents}). Keep it on the table for its crosscuts.`);
+    }
+
+    add('stage','Rotate saw 90° — crosscut this reloaded blank',
+        'Its finished width is now established from a fresh square reference. Rotate the saw and complete the lengths before removing the pieces.');
+
+    const template=b.strips[0].placements;
+    for(let seg=0;seg<template.length;seg++){
+      const h=template[seg].rect.h;
+      const y=template[seg].rect.y+h;
+      const names=b.strips.map(s=>s.placements[seg]?.piece.name).filter(Boolean);
+      if(y < slab.w-EPS){
+        const x1=b.strips[0].shopX;
+        const last=b.strips[b.strips.length-1];
+        const x2=last.shopX+last.w;
+        const n=addMark('H',x1,y,x2-x1,KERF,'finish');
+        add('cut',`Cut ${n} — crosscut ${toMixed(h)}`,
+            `${seg===0?'From the freshly squared end/reference':'From the fresh edge left by the previous crosscut'}, make one full horizontal pass at ${toMixed(h)} across ${names.length>1?'all '+names.length+' matching strips':'the strip'}.`);
+      }
+      if(names.length) add('done',`Remove ${names.join(', ')}`,
+        `${names.length>1?'These pieces are':'This piece is'} now finished and square; remove ${names.length>1?'them':'it'} from the table.`);
+    }
+  }
+
+  return {actions,marks,shopRects,roughs};
+}
+
+function assignCutNumbers(plan,slabIndex){
+  // Clear any old numbering from the tree-based fallback.
+  for(const op of plan.operations.filter(o=>o.slabIndex===slabIndex)) for(const c of op.cuts) delete c.cutNo;
+  if(!plan.shopMarks) plan.shopMarks={};
+  if(!plan.shopRects) plan.shopRects={};
+  if(!plan.shopRoughs) plan.shopRoughs={};
+  if(!plan.shopUnsafe) plan.shopUnsafe={};
+  const practical=buildStripFirstSequence(plan,slabIndex);
+  if(practical && practical.unsafe){
+    plan.shopMarks[slabIndex]=[];
+    plan.shopRects[slabIndex]=null;
+    plan.shopRoughs[slabIndex]=[];
+    plan.shopUnsafe[slabIndex]=practical;
+    return [{n:1,tag:'warn',title:'This layout needs more cleanup stock',text:`The pieces technically fit by finished dimensions, but a shop-safe reload would need about ${toMixed(practical.requiredWidth)} across this slab direction and only ${toMixed(practical.availableWidth)} is available. Add a larger slab or another slab rather than cutting a staged piece to finished width before removal.`}];
+  }
+  if(practical){
+    plan.shopMarks[slabIndex]=practical.marks;
+    plan.shopRects[slabIndex]=practical.shopRects;
+    plan.shopRoughs[slabIndex]=practical.roughs;
+    plan.shopUnsafe[slabIndex]=null;
+    return practical.actions;
+  }
+  plan.shopMarks[slabIndex]=null;
+  plan.shopRects[slabIndex]=null;
+  plan.shopRoughs[slabIndex]=[];
+  plan.shopUnsafe[slabIndex]=null;
+  return buildSequence(plan,slabIndex);
+}
+function slabSvg(plan,slabIndex){
+  const slab=plan.slabs[slabIndex], ops=plan.operations.filter(o=>o.slabIndex===slabIndex);
+  const pad=5, W=slab.l, H=slab.w;
+  let s=`<svg viewBox="${-pad} ${-pad} ${W+pad*2} ${H+pad*2}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Cut layout for ${esc(slab.name)}">`;
+  s+=`<rect x="0" y="0" width="${W}" height="${H}" rx=".4" fill="#aaa89f" stroke="#f0eee6" stroke-width=".35"/>`;
+  const roughs=plan.shopRoughs&&plan.shopRoughs[slabIndex];
+  if(roughs){
+    for(const r of roughs){
+      s+=`<rect x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" fill="#7ec8d8" fill-opacity=".07" stroke="#7ec8d8" stroke-width=".28" stroke-dasharray="1.2,.8"/>`;
+      s+=`<text x="${r.x+r.w/2}" y="${Math.min(4,r.h/8)}" text-anchor="middle" font-size="1.25" font-weight="700" fill="#bcebf5">ROUGH +${esc(toMixed(r.allowance,false))}</text>`;
+    }
+  }
+  // kerf gaps: when a strip-first shop sequence is available, draw the actual
+  // batched rip/crosscut passes instead of the optimizer's internal tree cuts.
+  const shopMarks=plan.shopMarks&&plan.shopMarks[slabIndex];
+  if(shopMarks){
+    for(const m of shopMarks){
+      const cutColor=m.kind==='rough'?'#7ec8d8':(m.kind==='square'?'#b9e3c6':'#101416');
+      const opacity=m.kind==='finish'?'.95':'.9';
+      s+=`<rect x="${m.x}" y="${m.y}" width="${Math.max(m.w,.12)}" height="${Math.max(m.h,.12)}" fill="${cutColor}" opacity="${opacity}"/>`;
+      const tx=m.axis==='V'?m.x+Math.max(m.w,.12)/2:m.x+Math.max(1.8,Math.min(m.w/2,4));
+      const ty=m.axis==='V'?m.y+2.2:m.y+Math.max(m.h,.12)/2;
+      s+=`<circle cx="${tx}" cy="${ty}" r="1.35" fill="#f1c86e" stroke="#171b1e" stroke-width=".2"/><text x="${tx}" y="${ty+.45}" font-size="1.2" font-weight="800" text-anchor="middle" fill="#171b1e">${m.cutNo}</text>`;
+    }
+  }else{
+    for(const op of ops) for(const c of op.cuts){
+      s+=`<rect x="${c.x}" y="${c.y}" width="${Math.max(c.w,.12)}" height="${Math.max(c.h,.12)}" fill="#101416" opacity=".95"/>`;
+      if(c.cutNo){
+        const tx=c.x+Math.max(c.w,.12)/2;
+        const ty=c.axis==='V'?c.y+Math.min(2.3,c.h/2):c.y+Math.max(c.h,.12)/2;
+        s+=`<circle cx="${tx}" cy="${ty}" r="1.35" fill="#f1c86e" stroke="#171b1e" stroke-width=".2"/><text x="${tx}" y="${ty+.45}" font-size="1.2" font-weight="800" text-anchor="middle" fill="#171b1e">${c.cutNo}</text>`;
+      }
+    }
+  }
+  const shopRectMap=plan.shopRects&&plan.shopRects[slabIndex];
+  for(const op of ops){
+    const r=(shopRectMap&&shopRectMap.get(op.piece.key))||op.pieceRect,c=colorFor(op.piece.label);
+    s+=`<rect x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" fill="${c}" fill-opacity=".92" stroke="#f4f7f8" stroke-width=".25"/>`;
+    const fs=Math.max(1.5,Math.min(4,Math.min(r.w,r.h)/5));
+    s+=`<text x="${r.x+r.w/2}" y="${r.y+r.h/2-fs*.15}" font-size="${fs}" font-weight="800" text-anchor="middle" fill="white">${esc(op.piece.name)}</text>`;
+    s+=`<text x="${r.x+r.w/2}" y="${r.y+r.h/2+fs*.95}" font-size="${Math.max(1.1,fs*.48)}" text-anchor="middle" fill="white">${esc(toMixed(r.w,false))} × ${esc(toMixed(r.h,false))}</text>`;
+  }
+  // dimensions
+  s+=`<text x="${W/2}" y="${-1.2}" text-anchor="middle" font-size="1.7" font-weight="700" fill="#cfd8dc">${esc(toMixed(W))}</text>`;
+  s+=`<text x="${-2.1}" y="${H/2}" text-anchor="middle" font-size="1.7" font-weight="700" fill="#cfd8dc" transform="rotate(-90 -2.1 ${H/2})">${esc(toMixed(H))}</text>`;
+  s+='</svg>'; return s;
+}
+function renderResult(plan,allPieces,allSlabs){
+  // build sequences first so cut numbers populate SVG
+  const seqs={};
+  plan.slabs.forEach((s,i)=>{if(s.active)seqs[i]=assignCutNumbers(plan,i)});
+  const used=plan.slabs.filter(s=>s.active).length;
+  const placed=plan.placements.length, total=allPieces.length;
+  const yieldPct=plan.usedArea?plan.placedArea/plan.usedArea*100:0;
+  let html=`<div class="result-grid"><div class="summary">
+    <div class="metric"><b>${placed}/${total}</b><span>pieces placed</span></div>
+    <div class="metric"><b>${used}</b><span>slab${used===1?'':'s'} used</span></div>
+    <div class="metric"><b>${yieldPct.toFixed(1)}%</b><span>part area / used slab area</span></div>
+    <div class="status ${plan.unplaced.length?'bad':'good'}">${plan.unplaced.length?'Needs another / larger slab':'All pieces fit'}</div>
+  </div>`;
+
+  if(plan.unplaced.length){
+    html+=`<div class="warning error"><b>Unplaced:</b> ${plan.unplaced.map(p=>esc(p.name)+' ('+esc(toMixed(p.l))+' × '+esc(toMixed(p.w))+')').join(', ')}.
+    The optimizer will not cheat the 1/4″ kerf or use a partial/drop cut.</div>`;
+  }
+
+  // Specific mathematically useful warning for common exact-fit kerf issue
+  html+=`<div class="warning"><b>Shop note:</b> Entered sizes are treated as finished dimensions. If two finished sections exactly add up to the slab dimension, they still need an additional 1/4″ between them for the blade. For example, 55″ + 20″ requires at least 75 1/4″ in that cut direction. <b>Reload rule:</b> anything that leaves the table stays at least 1″ oversized until it is reloaded, squared, and finished.</div>`;
+
+  plan.slabs.forEach((slab,i)=>{
+    if(!slab.active)return;
+    html+=`<div class="layout-card"><div class="layout-title"><strong>${esc(slab.name)} — ${esc(toMixed(slab.l))} × ${esc(toMixed(slab.w))}</strong><span>${slab.placements.length} piece${slab.placements.length===1?'':'s'}</span></div>
+      <div class="svg-wrap">${slabSvg(plan,i)}<div class="legend"><span><i style="background:#aaa89f"></i>unused stone</span><span><i style="background:#101416"></i>finished cut</span><span><i style="background:#7ec8d8"></i>rough separation</span><span><i style="background:#b9e3c6"></i>squaring cut</span><span><i style="background:#f1c86e"></i>cut number</span></div></div>
+      <div class="card-body"><h2 style="margin-bottom:9px">Shop-floor sequence</h2><div class="sequence">`;
+    for(const a of seqs[i]){
+      html+=`<div class="step"><div class="step-num">${a.n}</div><div><b><span class="tag ${a.tag}">${a.tag==='stage'?'set aside':a.tag}</span>${esc(a.title)}</b><p>${esc(a.text)}</p></div></div>`;
+    }
+    html+='</div></div></div>';
+  });
+  html+='</div>';
+  document.getElementById('output').className='';
+  document.getElementById('output').innerHTML=html;
+}
+addPiece('A','','',1); addPiece('B','','',1); addSlab('','',1);
+</script>
+
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('./service-worker.js').catch(() => {}));
+}
+</script>
+</body>
+</html>

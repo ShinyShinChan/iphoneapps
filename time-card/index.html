@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#120404">
+<title>Time Card Planner</title>
+<style>
+:root{
+  --bg:#070303; --bg2:#140606; --panel:#120909; --panel2:#1b0b0b; --panel3:#220d0d;
+  --line:#4a1c1c; --line2:#6e2c2c; --red:#ff4d4d; --red2:#b41515; --red3:#ff8787;
+  --gold:#ffb86b; --text:#fff4f4; --muted:#d7b5b5; --good:#8df0ac; --warn:#ffd27a; --shadow:0 18px 50px #000a;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{background:#070303}
+body{margin:0;min-height:100vh;color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+background:radial-gradient(circle at 10% 0%,#9e101033,transparent 28%),radial-gradient(circle at 100% 10%,#ff474725,transparent 24%),linear-gradient(180deg,#050202,#120404 40%,#090303);
+padding-bottom:calc(118px + env(safe-area-inset-bottom));}
+body:before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.07;background:repeating-linear-gradient(180deg,transparent 0 7px, rgba(255,255,255,.05) 7px 8px)}
+button,input,select{font:inherit}button{touch-action:manipulation}
+.app{max-width:700px;margin:0 auto;padding:14px 12px 24px}
+.hero{position:relative;overflow:hidden;border:1px solid var(--line2);border-radius:26px;padding:18px 16px 16px;background:linear-gradient(135deg,rgba(255,80,80,.10),transparent 35%),linear-gradient(160deg,#1c0808f2,#0d0505ed 62%,#150707f4);box-shadow:var(--shadow), inset 0 1px #ffffff14}
+.hero:before{content:"";position:absolute;inset:0;background:radial-gradient(circle at center, transparent 0 40%, rgba(255,80,80,.08) 78%, transparent 82%);pointer-events:none}
+.eyebrow{font-size:10px;letter-spacing:2px;font-weight:900;color:var(--gold);text-transform:uppercase;position:relative;z-index:1}
+h1{font-family:Georgia,serif;margin:6px 0 3px;font-size:clamp(28px,8vw,42px);line-height:1.02;color:#fff7f7;position:relative;z-index:1}
+.subtitle{font-size:12px;color:var(--muted);line-height:1.45;margin-top:8px;max-width:96%;position:relative;z-index:1}
+.date-chip{display:inline-flex;margin-top:12px;border:1px solid var(--line2);background:#130909d4;border-radius:999px;padding:6px 10px;color:#fde7e7;font-size:11px;font-weight:700;position:relative;z-index:1}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:14px;position:relative;z-index:1}
+.stat{padding:12px 12px 11px;border:1px solid var(--line);border-radius:16px;background:#0a0505d6;min-width:0}
+.stat span{display:block;font-size:9px;letter-spacing:1.2px;color:var(--muted);font-weight:800;text-transform:uppercase}.stat strong{display:block;margin-top:3px;font-size:24px;line-height:1.1;color:#fff;white-space:nowrap}.stat.good strong{color:var(--good)}.stat.warn strong{color:var(--warn)}
+.section-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:18px 2px 10px}.section-head h2{font-size:13px;letter-spacing:1.4px;text-transform:uppercase;margin:0;color:#f7dada}.section-head .mini{font-size:11px;color:var(--muted)}
+.days{display:grid;gap:11px}.day-card{border:1px solid var(--line);border-radius:21px;background:linear-gradient(180deg,#160909f0,#0d0505eb);box-shadow:0 12px 30px #0006;overflow:hidden}
+.day-top{display:flex;align-items:center;justify-content:space-between;padding:13px 14px 10px;border-bottom:1px solid #321111}.day-name{font-family:Georgia,serif;font-weight:800;font-size:20px;color:#fff7f7}.day-worked{font-size:12px;color:var(--muted);text-align:right}.day-worked b{display:block;font-size:18px;color:var(--good)}
+.entry-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:12px 12px 10px}.field label{display:block;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:#e6b0b0;font-weight:800;margin:0 0 5px 2px}
+input[type=time],select{width:100%;min-height:50px;border:1px solid #5e2424;background:#090404;color:white;border-radius:14px;padding:10px 11px;font-size:16px;font-weight:700;outline:none;color-scheme:dark}
+input[type=time]:focus,select:focus{border-color:var(--red3);box-shadow:0 0 0 3px #ff6e6e1f}.field.full{grid-column:1/-1}
+.suggestion{margin:0 12px 12px;border:1px solid #5b2323;border-radius:15px;background:#0b0505;padding:11px 12px;display:grid;grid-template-columns:auto 1fr;gap:11px;align-items:center}.suggest-time{font-size:20px;font-weight:900;color:#ffd0d0;white-space:nowrap}.suggest-copy{font-size:11px;color:var(--muted);line-height:1.35}.suggest-copy b{display:block;color:#ffecec;font-size:12px;margin-bottom:2px}.suggestion.done{border-color:#2f5b3d;background:#0a1410}.suggestion.done .suggest-time{color:var(--good)}.suggestion.friday{border-color:#7f6440}.suggestion.friday .suggest-copy b{color:var(--warn)}
+.utility-card{margin-top:14px;border:1px solid var(--line);border-radius:19px;background:#100707;padding:0 13px}details summary{list-style:none;cursor:pointer;padding:14px 1px;font-size:12px;font-weight:850;color:#ffeded;display:flex;justify-content:space-between;align-items:center}details summary::-webkit-details-marker{display:none}details summary:after{content:"＋";color:var(--red3)}details[open] summary:after{content:"−"}
+.rules{padding:0 1px 13px;display:grid;gap:9px}.rule{border-top:1px solid #2a1111;padding-top:9px}.rule b{font-size:11px;color:#fff2f2}.rule p{font-size:11px;line-height:1.45;color:var(--muted);margin:3px 0 0}.footer{font-size:10px;text-align:center;color:#9f7a7a;padding:18px 0 2px}
+.action-dock{position:fixed;z-index:30;left:0;right:0;bottom:0;padding:9px 10px calc(9px + env(safe-area-inset-bottom));background:linear-gradient(180deg,#0e0505ef,#060202fa);border-top:1px solid #3b1515;backdrop-filter:blur(14px)}
+.action-inner{max-width:700px;margin:auto;display:grid;grid-template-columns:1fr 1fr 1.15fr;gap:8px}.action-btn{position:relative;min-height:74px;border:1px solid #6a2929;border-radius:18px;background:linear-gradient(180deg,#1b0909,#100505);color:#fff7f7;font-weight:850;font-size:11px;padding:7px 6px 8px;box-shadow:0 7px 16px #0007,inset 0 1px #ffffff14}.action-btn:before{content:"";position:absolute;inset:5px;border-radius:13px;border:1px solid #ffffff10;pointer-events:none}.action-btn.primary{background:linear-gradient(180deg,#2b0909,#160505);border-color:#9b3030;box-shadow:0 7px 18px #0008,0 0 18px #800f0f40,inset 0 1px #ffffff18}.action-btn .device{width:28px;height:28px;object-fit:contain;display:block;margin:0 auto 4px;filter:drop-shadow(0 2px 3px rgba(0,0,0,.45))}.action-btn .sub{display:block;font-size:9px;opacity:.82;font-weight:700;letter-spacing:.4px;color:#dfb3b3}
+.overlay{position:fixed;z-index:60;inset:0;background:#030101d9;display:none;align-items:flex-end;justify-content:center;padding:12px}.overlay.show{display:flex}.sheet{width:min(680px,100%);max-height:80vh;overflow:auto;border:1px solid #6e2c2c;border-radius:23px 23px 18px 18px;background:#130808;box-shadow:0 -20px 60px #000a;padding:16px}.sheet h3{margin:0 0 4px;font-family:Georgia,serif;font-size:24px;color:#fff7f7}.sheet .sheet-sub{font-size:12px;color:var(--muted);margin-bottom:14px}
+.name-input{width:100%;height:51px;border:1px solid #5d2626;background:#090404;color:white;border-radius:14px;padding:0 13px;font-size:16px;outline:none}.sheet-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:12px}.sheet button{height:48px;border-radius:13px;border:1px solid #6a2929;background:#1d0909;color:white;font-weight:800}.sheet button.confirm{background:linear-gradient(#982020,#661414)}
+.saved-list{display:grid;gap:9px}.saved-item{border:1px solid #4d1e1e;border-radius:15px;background:#0a0404;padding:11px;display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center}.saved-item b{display:block;font-size:14px;color:#fff4f4}.saved-item small{display:block;color:var(--muted);margin-top:2px}.saved-item-actions{display:flex;gap:6px}.tiny-btn{height:36px!important;padding:0 10px;border-radius:10px!important;font-size:11px}.tiny-btn.delete{color:#ffb1ba;border-color:#673845;background:#251018}
+.summary-overlay{align-items:center;justify-content:center;padding:10px}.summary-sheet{width:min(700px,100%);height:min(92vh,760px);max-height:92vh;overflow:hidden;padding:14px;display:grid;grid-template-rows:auto 1fr auto auto;border-radius:24px;background:linear-gradient(180deg,#170808,#0d0404);border:1px solid #6e2c2c}.summary-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:10px}.summary-top .sheet-sub{margin:4px 0 0}.summary-close{border:1px solid #6a2929;background:#190808;border-radius:12px;color:#fff;min-width:84px;height:40px;font-size:12px;font-weight:800}
+.summary-table{border:1px solid #4d1e1e;border-radius:16px;background:#0a0404;padding:8px;display:grid;grid-template-rows:repeat(6,1fr);gap:6px;min-height:0}.sum-row{display:grid;grid-template-columns:1.15fr .95fr .95fr .65fr .8fr;gap:6px;align-items:center;border:1px solid #261010;border-radius:12px;padding:7px 8px;background:#130707;min-height:0}.sum-head{background:#1b0a0a;border-color:#462020}.sum-cell{font-size:11px;color:#fbe8e8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.sum-head .sum-cell{font-size:10px;color:#f5bcbc;text-transform:uppercase;letter-spacing:.8px;font-weight:800}.sum-day{font-weight:800}.sum-muted{color:var(--muted)}
+.summary-totals{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}.sum-total{border:1px solid #4d1e1e;border-radius:14px;background:#0d0505;padding:10px 8px;text-align:center}.sum-total span{display:block;font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);font-weight:800}.sum-total b{display:block;font-size:17px;margin-top:4px;color:#fff}.sum-total.good b{color:var(--good)}.sum-total.warn b{color:var(--warn)}
+.summary-actions{margin-top:10px;display:grid;grid-template-columns:1fr;gap:8px}.summary-shot{height:50px;border-radius:14px;border:1px solid #9b3030;background:linear-gradient(180deg,#982020,#661414);color:#fff;font-weight:900;letter-spacing:.3px;display:flex;align-items:center;justify-content:center;gap:10px}.summary-shot img{width:22px;height:22px;object-fit:contain}
+.toast{position:fixed;z-index:90;left:50%;bottom:calc(112px + env(safe-area-inset-bottom));transform:translate(-50%,16px);background:#2c1111;border:1px solid #8e3535;color:white;padding:10px 14px;border-radius:999px;box-shadow:0 10px 30px #0008;font-size:12px;font-weight:750;opacity:0;pointer-events:none;transition:.22s;max-width:90%;text-align:center}.toast.show{opacity:1;transform:translate(-50%,0)}
+.capture-mode .action-dock,.capture-mode .utility-card,.capture-mode .footer,.capture-mode .summary-actions,.capture-mode .summary-close{display:none!important}.capture-mode body{padding-bottom:10px}.capture-mode .app{padding-bottom:10px}
+.summary-export .app,.summary-export .action-dock{display:none!important}.summary-export body{padding-bottom:0}.summary-export .summary-overlay{position:static;display:block!important;background:transparent;padding:0}.summary-export .summary-sheet{height:auto;max-height:none;width:100%;box-shadow:none;margin:14px auto}.summary-export .summary-top{margin-bottom:10px}.summary-export .summary-close,.summary-export .summary-actions{display:none!important}.summary-export .toast{display:none!important}
+@media(min-width:560px){.entry-grid{grid-template-columns:1fr 1fr 1fr}.field.full{grid-column:auto}.days{grid-template-columns:1fr 1fr}.day-card:last-child{grid-column:1/-1}.stats{grid-template-columns:repeat(4,1fr)}.stat strong{font-size:21px}}
+</style>
+
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="format-detection" content="telephone=no">
+
+<style>
+html{background:var(--bg,#0f1214)}
+@supports (padding: max(0px)){body{padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)}}
+</style>
+</head>
+<body>
+<div class="app" id="captureRoot">
+  <header class="hero">
+    <div class="eyebrow">Professional Time Tracking</div>
+    <h1>Time Card Planner</h1>
+    <div class="subtitle">Plan your 32-hour week, track lunch breaks, save reusable schedules, and review a clean weekly summary whenever you need it.</div>
+    <div class="date-chip" id="weekChip">This Week</div>
+    <div class="stats">
+      <div class="stat"><span>Target</span><strong>32:00</strong></div>
+      <div class="stat good"><span>Worked</span><strong id="worked">0:00</strong></div>
+      <div class="stat warn"><span>Remaining</span><strong id="remaining">32:00</strong></div>
+      <div class="stat"><span>Open Days</span><strong id="openDays">5</strong></div>
+    </div>
+  </header>
+
+  <div class="section-head"><h2>Weekly Schedule</h2><div class="mini">Tap a time to edit</div></div>
+  <main class="days" id="days"></main>
+
+  <section class="utility-card">
+    <details>
+      <summary>Planner rules</summary>
+      <div class="rules">
+        <div class="rule"><b>Normal rhythm</b><p>Suggestions start around 4:45 AM.</p></div>
+        <div class="rule"><b>Friday guardrails</b><p>Friday's suggested start stays between 4:30 AM and 10:30 AM and flags unusual cases.</p></div>
+        <div class="rule"><b>Optional lunch</b><p>A 30-minute lunch is deducted from elapsed time.</p></div>
+        <div class="rule"><b>Smart distribution</b><p>Remaining time is split across weekdays that do not yet have complete start/end entries.</p></div>
+      </div>
+    </details>
+  </section>
+  <div class="footer">PROFESSIONAL TIME TRACKING • 32:00 GOAL</div>
+</div>
+
+<nav class="action-dock">
+  <div class="action-inner">
+    <button class="action-btn" id="saveBtn"><img class="device" src="mallet.png" alt="Mallet icon">Save<span class="sub">Store schedule</span></button>
+    <button class="action-btn" id="loadBtn"><img class="device" src="mallet.png" alt="Mallet icon">Load<span class="sub">Recall schedule</span></button>
+    <button class="action-btn primary" id="summaryBtn"><img class="device" src="mallet.png" alt="Mallet icon">Summary<span class="sub">Review weekly totals</span></button>
+  </div>
+</nav>
+
+<div class="overlay" id="saveOverlay">
+  <div class="sheet">
+    <h3>Save Schedule</h3><div class="sheet-sub">Give this schedule a name so you can load it later.</div>
+    <input class="name-input" id="scheduleName" maxlength="40" placeholder="Example: Early Shift / Standard Week">
+    <div class="sheet-actions"><button data-close="saveOverlay">Cancel</button><button class="confirm" id="confirmSave">Save</button></div>
+  </div>
+</div>
+<div class="overlay" id="loadOverlay">
+  <div class="sheet">
+    <h3>Saved Schedules</h3><div class="sheet-sub">Load a saved week or remove one you no longer need.</div>
+    <div class="saved-list" id="savedList"></div>
+    <div class="sheet-actions"><button data-close="loadOverlay" style="grid-column:1/-1">Close</button></div>
+  </div>
+</div>
+<div class="overlay summary-overlay" id="summaryOverlay">
+  <div class="sheet summary-sheet">
+    <div class="summary-top">
+      <div>
+        <h3>Weekly Summary</h3>
+        <div class="sheet-sub">A compact summary of start time, end time, lunch, and total time for each day.</div>
+      </div>
+      <button class="summary-close" data-close="summaryOverlay">Close</button>
+    </div>
+    <div class="summary-table" id="summaryTable"></div>
+    <div class="summary-totals">
+      <div class="sum-total"><span>Target</span><b>32:00</b></div>
+      <div class="sum-total good"><span>Worked</span><b id="sumWorked">0:00</b></div>
+      <div class="sum-total warn"><span>Remaining</span><b id="sumRemaining">32:00</b></div>
+      <div class="sum-total"><span>Open Days</span><b id="sumOpen">5</b></div>
+    </div>
+    <div class="summary-actions">
+      <button class="summary-shot" id="summaryShot"><img src="mallet.png" alt="Mallet icon">Screenshot</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const TARGET=32*60;
+const DAYS=["Monday","Tuesday","Wednesday","Thursday","Friday"];
+const daysEl=document.getElementById('days');
+const qs=(s,p=document)=>p.querySelector(s);
+const qsa=(s,p=document)=>[...p.querySelectorAll(s)];
+const pad=n=>String(n).padStart(2,'0');
+const fmt=m=>`${Math.floor(Math.max(0,m)/60)}:${pad(Math.max(0,m)%60)}`;
+const parseTime=v=>{if(!v)return null;const [h,m]=v.split(':').map(Number);return h*60+m};
+const clock=m=>{if(m===null||m===undefined)return '—';m=((m%(24*60))+(24*60))%(24*60);const h=Math.floor(m/60),mi=m%60,ap=h>=12?'PM':'AM';return `${(h%12)||12}:${pad(mi)} ${ap}`};
+function weekLabel(){const d=new Date();return d.toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric',year:'numeric'})}
+qs('#weekChip').textContent=weekLabel();
+
+function dayCard(day){
+ const el=document.createElement('section');el.className='day-card';el.dataset.day=day;
+ el.innerHTML=`<div class="day-top"><div class="day-name">${day}</div><div class="day-worked">Worked<b class="workedVal">—</b></div></div>
+ <div class="entry-grid">
+   <div class="field"><label>Start</label><input type="time" class="start"></div>
+   <div class="field"><label>End</label><input type="time" class="end"></div>
+   <div class="field full"><label>Lunch</label><select class="lunch"><option value="0">No lunch</option><option value="30">30 minutes</option></select></div>
+ </div>
+ <div class="suggestion"><div class="suggest-time">—</div><div class="suggest-copy"><b>Awaiting entry</b><span>Enter start and end when worked.</span></div></div>`;
+ qsa('input,select',el).forEach(x=>x.addEventListener('input',()=>{calc();autoSave()}));
+ return el;
+}
+DAYS.forEach(d=>daysEl.appendChild(dayCard(d)));
+
+function duration(card){const s=parseTime(qs('.start',card).value),e=parseTime(qs('.end',card).value);if(s===null||e===null)return null;let d=e-s;if(d<0)d+=1440;d-=Number(qs('.lunch',card).value||0);return Math.max(0,d)}
+function calc(){
+ const cards=qsa('.day-card');let worked=0,open=[];
+ cards.forEach(c=>{const d=duration(c);qs('.workedVal',c).textContent=d===null?'—':fmt(d);if(d===null)open.push(c);else worked+=d});
+ const rem=Math.max(0,TARGET-worked);qs('#worked').textContent=fmt(worked);qs('#remaining').textContent=fmt(rem);qs('#openDays').textContent=open.length;
+ const base=open.length?Math.floor(rem/open.length):0;let r=open.length?rem%open.length:0;
+ open.forEach((c,i)=>{let alloc=base+(i<r?1:0);let start=285;const lunch=Number(qs('.lunch',c).value||0);let end=start+alloc+lunch;const box=qs('.suggestion',c),st=qs('.suggest-time',c),copy=qs('.suggest-copy',c);box.className='suggestion';
+   if(alloc<=0){box.classList.add('done');st.textContent='0:00';copy.innerHTML='<b>Week complete</b><span>No additional time needed.</span>';return}
+   let note='Suggested from 4:45 AM';
+   if(c.dataset.day==='Friday'){box.classList.add('friday');if(end>600&&alloc<=330){start=270;end=start+alloc+lunch}start=Math.max(270,Math.min(630,start));note=end>600?'Friday runs past typical 10:00 AM max':'Within typical Friday window'}
+   st.textContent=fmt(alloc);copy.innerHTML=`<b>${clock(start)}–${clock(end)}</b><span>${note}${lunch?' • includes 30m lunch':''}</span>`;
+ });
+ cards.filter(c=>duration(c)!==null).forEach(c=>{const box=qs('.suggestion',c);box.className='suggestion done';qs('.suggest-time',c).textContent='✓';qs('.suggest-copy',c).innerHTML='<b>Entry counted</b><span>This day is included in Worked.</span>'});
+}
+function currentData(){return {days:qsa('.day-card').map(c=>({day:c.dataset.day,start:qs('.start',c).value,end:qs('.end',c).value,lunch:qs('.lunch',c).value})),savedAt:new Date().toISOString()}}
+function applyData(data){if(!data||!Array.isArray(data.days))return;data.days.forEach((d,i)=>{const c=qsa('.day-card')[i];if(!c)return;qs('.start',c).value=d.start||'';qs('.end',c).value=d.end||'';qs('.lunch',c).value=String(d.lunch??'0')});calc();autoSave()}
+function autoSave(){localStorage.setItem('timecard_autosave',JSON.stringify(currentData()))}
+function savedMap(){try{return JSON.parse(localStorage.getItem('timecard_saved')||'{}')}catch{return {}}}
+function writeMap(m){localStorage.setItem('timecard_saved',JSON.stringify(m))}
+function toast(msg){const t=qs('#toast');t.textContent=msg;t.classList.add('show');clearTimeout(window.__tt);window.__tt=setTimeout(()=>t.classList.remove('show'),2100)}
+function openOverlay(id){qs('#'+id).classList.add('show')}
+function closeOverlay(id){qs('#'+id).classList.remove('show')}
+qsa('[data-close]').forEach(b=>b.onclick=()=>closeOverlay(b.dataset.close));
+qsa('.overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('show')}));
+qs('#saveBtn').onclick=()=>{qs('#scheduleName').value='';openOverlay('saveOverlay');setTimeout(()=>qs('#scheduleName').focus(),200)};
+qs('#confirmSave').onclick=()=>{const name=qs('#scheduleName').value.trim();if(!name){toast('Give the schedule a name first');return}const m=savedMap();m[name]={...currentData(),name};writeMap(m);closeOverlay('saveOverlay');toast(`Saved “${name}”`)};
+function renderSaved(){const m=savedMap(),names=Object.keys(m).sort((a,b)=>a.localeCompare(b));const list=qs('#savedList');list.innerHTML='';if(!names.length){list.innerHTML='<div style="color:#d7b5b5;font-size:13px;padding:12px 2px">No saved schedules yet.</div>';return}names.forEach(name=>{const item=document.createElement('div');item.className='saved-item';const d=m[name];item.innerHTML=`<div><b>${escapeHtml(name)}</b><small>${d.savedAt?new Date(d.savedAt).toLocaleString():''}</small></div><div class="saved-item-actions"><button class="tiny-btn load">Load</button><button class="tiny-btn delete">Delete</button></div>`;qs('.load',item).onclick=()=>{applyData(d);closeOverlay('loadOverlay');toast(`Loaded “${name}”`)};qs('.delete',item).onclick=()=>{const mm=savedMap();delete mm[name];writeMap(mm);renderSaved();toast('Schedule deleted')};list.appendChild(item)})}
+function escapeHtml(s){return s.replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
+qs('#loadBtn').onclick=()=>{renderSaved();openOverlay('loadOverlay')};
+function buildSummary(){
+ const table=qs('#summaryTable');
+ let rows=`<div class="sum-row sum-head"><div class="sum-cell">Day</div><div class="sum-cell">Start</div><div class="sum-cell">End</div><div class="sum-cell">Lunch</div><div class="sum-cell">Total</div></div>`;
+ let worked=0,open=0;
+ qsa('.day-card').forEach(c=>{
+   const s=qs('.start',c).value, e=qs('.end',c).value, lunch=Number(qs('.lunch',c).value||0), dur=duration(c);
+   if(dur===null) open++; else worked+=dur;
+   rows += `<div class="sum-row"><div class="sum-cell sum-day">${c.dataset.day}</div><div class="sum-cell ${s?'':'sum-muted'}">${s?clock(parseTime(s)):'—'}</div><div class="sum-cell ${e?'':'sum-muted'}">${e?clock(parseTime(e)):'—'}</div><div class="sum-cell ${lunch?'':'sum-muted'}">${lunch?'Yes':'No'}</div><div class="sum-cell ${dur===null?'sum-muted':''}">${dur===null?'—':fmt(dur)}</div></div>`;
+ });
+ table.innerHTML=rows;
+ qs('#sumWorked').textContent=fmt(worked);
+ qs('#sumRemaining').textContent=fmt(Math.max(0,TARGET-worked));
+ qs('#sumOpen').textContent=open;
+}
+qs('#summaryBtn').onclick=()=>{calc();buildSummary();openOverlay('summaryOverlay')};
+async function exportSummaryImage(){
+  calc(); buildSummary(); autoSave();
+  const cards=qsa('.day-card'); let worked=0,open=0;
+  const rows=cards.map(c=>{
+    const s=qs('.start',c).value,e=qs('.end',c).value,lunch=Number(qs('.lunch',c).value||0),dur=duration(c);
+    if(dur===null)open++;else worked+=dur;
+    return [c.dataset.day,s?clock(parseTime(s)):'—',e?clock(parseTime(e)):'—',lunch?'Yes':'No',dur===null?'—':fmt(dur)];
+  });
+  const W=1200,H=900,canvas=document.createElement('canvas');canvas.width=W;canvas.height=H;
+  const ctx=canvas.getContext('2d');
+  const rr=(x,y,w,h,r)=>{ctx.beginPath();ctx.roundRect(x,y,w,h,r);};
+  ctx.fillStyle='#0b0303';ctx.fillRect(0,0,W,H);
+  const g=ctx.createLinearGradient(0,0,W,H);g.addColorStop(0,'#2a0909');g.addColorStop(1,'#0b0303');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+  ctx.fillStyle='#fff7f7';ctx.font='700 58px -apple-system,BlinkMacSystemFont,Segoe UI,Arial,sans-serif';ctx.fillText('Weekly Time Card Summary',70,95);
+  ctx.fillStyle='#d8a4a4';ctx.font='500 25px -apple-system,BlinkMacSystemFont,Segoe UI,Arial,sans-serif';ctx.fillText(new Date().toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric',year:'numeric'}),72,137);
+  const cols=[70,315,525,735,900], widths=[245,210,210,165,230];
+  const headers=['Day','Start','End','Lunch','Total']; let y=190;
+  ctx.fillStyle='#321010';rr(55,y-48,1090,70,18);ctx.fill();
+  ctx.font='800 22px -apple-system,BlinkMacSystemFont,Segoe UI,Arial,sans-serif';ctx.fillStyle='#f3baba';headers.forEach((h,i)=>ctx.fillText(h,cols[i],y));
+  y+=70;
+  rows.forEach((row,ri)=>{
+    ctx.fillStyle=ri%2?'#120606':'#170808';rr(55,y-43,1090,75,16);ctx.fill();
+    row.forEach((v,i)=>{ctx.font=(i===0?'750 ':'600 ')+'24px -apple-system,BlinkMacSystemFont,Segoe UI,Arial,sans-serif';ctx.fillStyle=i===4?'#ffffff':'#f4dddd';ctx.fillText(v,cols[i],y);});
+    y+=82;
+  });
+  const metrics=[['Target','32:00'],['Worked',fmt(worked)],['Remaining',fmt(Math.max(0,TARGET-worked))],['Open Days',String(open)]];
+  const mx=[55,335,615,895];
+  metrics.forEach((m,i)=>{ctx.fillStyle='#130707';rr(mx[i],700,250,120,18);ctx.fill();ctx.strokeStyle='#582020';ctx.lineWidth=2;ctx.stroke();ctx.fillStyle='#c99a9a';ctx.font='800 18px -apple-system,BlinkMacSystemFont,Segoe UI,Arial,sans-serif';ctx.fillText(m[0].toUpperCase(),mx[i]+22,738);ctx.fillStyle=i===1?'#90e2aa':i===2?'#f0c66f':'#ffffff';ctx.font='800 36px -apple-system,BlinkMacSystemFont,Segoe UI,Arial,sans-serif';ctx.fillText(m[1],mx[i]+22,790);});
+  ctx.fillStyle='#9c7272';ctx.font='500 18px -apple-system,BlinkMacSystemFont,Segoe UI,Arial,sans-serif';ctx.fillText('Time Card Planner • 32-hour goal',70,865);
+  const blob=await new Promise(r=>canvas.toBlob(r,'image/png'));
+  if(!blob){toast('Could not create image');return}
+  const file=new File([blob],`Time-Card-Summary-${new Date().toISOString().slice(0,10)}.png`,{type:'image/png'});
+  try{
+    if(navigator.share && (!navigator.canShare || navigator.canShare({files:[file]}))){await navigator.share({files:[file],title:'Weekly Time Card Summary'});toast('Summary image ready to save or share');return}
+  }catch(e){if(e && e.name==='AbortError')return}
+  const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=file.name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),3000);toast('Summary image created');
+}
+qs('#summaryShot').onclick=exportSummaryImage;
+window.setCaptureMode=(on)=>document.documentElement.classList.toggle('capture-mode',!!on);
+window.nativeMessage=(msg)=>{toast(msg);setTimeout(()=>document.documentElement.classList.remove('summary-export'),200)};
+try{const a=JSON.parse(localStorage.getItem('timecard_autosave')||'null');if(a)applyData(a)}catch{}
+calc();
+</script>
+
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('./service-worker.js').catch(() => {}));
+}
+</script>
+</body>
+</html>
